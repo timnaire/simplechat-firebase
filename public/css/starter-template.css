@@ -1,0 +1,23 @@
+body {
+    padding-top: 50px;
+  }
+  .starter-template {
+    padding: 40px 15px;
+    text-align: center;
+  }
+.clear{
+  clear: both;
+}
+#recentMessage{
+  overflow: scroll;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 200px;
+}
+
+.float-right{
+  float: right;
+}
+.float-left{
+  float: left;
+}

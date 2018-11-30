@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google-signin-client_id" content="844382300539-ia2rroi167chiig5fqmm9ug4ueiaooke.apps.googleusercontent.com">
+    <meta name="google-signin-cookiepolicy" content="single_host_origin">
+    <meta name="google-signin-scope" content="profile email">
+    <title>Timmy's Learning Path</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/starter-template.css">
+    <!-- update the version number as needed -->
+    <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase-messaging.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.9/firebase-functions.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <!-- <script defer src="/__/firebase/init.js"></script> -->
+    <script>
+      // Initialize Firebase
+      
+      var config = {
+        apiKey: "AIzaSyArjQT7Ya5gZ3RQ96nmRGm2aPkLxaYMM-s",
+        authDomain: "fullstack-learning-path.firebaseapp.com",
+        databaseURL: "https://fullstack-learning-path.firebaseio.com",
+        projectId: "fullstack-learning-path",
+        storageBucket: "fullstack-learning-path.appspot.com",
+        messagingSenderId: "844382300539"
+      };
+      firebase.initializeApp(config);
+    </script>
+
+  </head>
+  <body>
+    <div class="container">
+        
+        <!-- <div class="g-signin2 float-right" id='signin' data-onsuccess="onSignIn"></div> -->
+        <div class='btn btn-default float-right' id='signout'>Sign Out</div>
+        <div id='profile' class='float-right'></div>
+        <div class='clear'></div>
+      <div class="starter-template">
+        <h1>Full-Stack Developer Learning Path</h1>
+        <h3>Simple web chat using firebase.</h3>
+        
+        <div class='col-md-6 col-md-offset-3'>
+          <div id='recentMessage' class='text-left'></div>
+          <div class='form-group'>
+            <p class='text-left'>Message:</p>
+            <textarea id="userMessage" cols="30" rows="5" class='form-control'></textarea>
+          </div>
+          <div class='form-group col-md-6'>
+            <input type="file" id='file' class='form-control'>
+          </div>
+          <button id='btnSubmit' class='btn btn-primary float-left'>Send</button>
+          
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+
+        var scrollRecent = document.getElementById("recentMessage");
+
+        function formatDate(date) {
+          var day = date.getDate();
+          var monthIndex = date.getMonth();
+          var year = date.getFullYear();
+          var hours = date.getHours();
+          var minutes = date.getMinutes();
+          var seconds = date.getSeconds();
+          var ampm = hours >= 12 ? 'PM' : 'AM';
+          hours = hours % 12;
+          hours = hours ? hours : 12; // the hour '0' should be '12'
+          minutes = minutes < 10 ? '0'+minutes : minutes;
+
+          return `${(monthIndex+1)}/${day}/${year} ${hours}:${minutes}:${seconds} ${ampm}`;
+        }
+
+        document.getElementById('userMessage').addEventListener('keypress',function(e){
+          if(e.keyCode == 13){
+            sendMessage();
+          }
+        });
+
+        btnSubmit.onclick = function(){
+          sendMessage();
+        }
+        function sendMessage(){
+          var user = firebase.auth().currentUser;
+          var message = document.getElementById('userMessage').value;
+          var database = firebase.database();
+          var imgURL = user.photoURL;
+          var username = user.displayName;
+
+          database.ref('messages/').set({
+            img: imgURL,
+            message:message,
+            name: username
+            // date: formatDate(new Date())
+          });
+          document.getElementById('userMessage').value = '';
+          event.preventDefault();
+        }
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        
+        firebase.auth().onAuthStateChanged(user => {
+          var profileDiv = document.getElementById('profile');
+          if (user) {
+            // User is signed in.
+
+            // document.getElementById('signin').style.display = 'none';
+            document.getElementById('signout').style.display = 'block';
+            
+          } else {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({
+              prompt: 'select_account'
+            });
+            firebase.auth().signInWithRedirect(provider);
+            // firebase.auth().signInWithPopup(provider);
+            profileDiv.style.display = 'none';
+            // document.getElementById('signin').style.display = 'block';
+            // document.getElementById('signout').style.display = 'none';
+            console.log('No user');
+          }
+        });
+        firebase.database().ref('messages').on('value', snapshot => {
+              var recentMessage = document.getElementById('recentMessage');
+              var newMessage = snapshot.child("message").val();
+              var newImg = snapshot.child("img").val();
+              var newName = snapshot.child("name").val();
+              //formatDate(new Date())
+              recentMessage.innerHTML += "<p><img src='"+newImg+"' width='40px' height='40px' style='border-radius:50px;' /> [" + newName + "] <b>" + newMessage + "</b></p>";
+              var scrollRecent = document.getElementById("recentMessage");
+              scrollRecent.scrollTop = scrollRecent.scrollHeight;
+            }, function (error) { 
+              console.log("Error: " + error.code);
+            });
+        document.getElementById('signout').onclick = function(){
+          firebase.auth().signOut().then(function() {
+            alert('You have signed out your google account.');
+          }).catch(function(error) {
+            console.log("Error: " + error.code);
+          });
+        }
+        
+        // firebase.messaging().requestPermission().then(() => { });
+        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+        //
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+      });
+    </script>
+  </body>
+</html>
